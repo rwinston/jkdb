@@ -39,24 +39,24 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
-Connector class for interfacing with a kdb+ process. This class is essentially a serializer/deserializer of java types
-to/from the kdb+ ipc wire format, enabling remote method invocation in kdb+ via tcp/ip.
+ Connector class for interfacing with a kdb+ process. This class is essentially a serializer/deserializer of java types
+ to/from the kdb+ ipc wire format, enabling remote method invocation in kdb+ via tcp/ip.
 
-To begin with, a connection may be established to a listening kdb+ process via the constructor
+ To begin with, a connection may be established to a listening kdb+ process via the constructor
 
-c connection=new c("localhost",5000);
+ c connection=new c("localhost",5000);
 
-There are then 3 methods available for interacting with the connection:
+ There are then 3 methods available for interacting with the connection:
 
-1)Sending a sync message using k()
+ 1)Sending a sync message using k()
 
-Object result=connection.k("functionName",args);
+ Object result=connection.k("functionName",args);
 
-2)Sending an async message using ks() connection.ks("functionName",args); 3)Awaiting an incoming async message using
-k() Object object=connection.k(); When the connection is no longer required, it may be closed via connection.close();
-*/ 
-public class KdbConnection{ 
-/**
+ 2)Sending an async message using ks() connection.ks("functionName",args); 3)Awaiting an incoming async message using
+ k() Object object=connection.k(); When the connection is no longer required, it may be closed via connection.close();
+ */
+public class KdbConnection{
+  /**
    encoding specifies the character encoding to use when [de]-serializing strings
    */
   private static String encoding="ISO-8859-1";
@@ -72,7 +72,7 @@ public class KdbConnection{
   /**
    s is the socket used to communicate with the remote kdb+ process
    */
-  public Socket s; 
+  public Socket s;
   /**
    i is the DataInputStream of the socket used to read data from the remote kdb+ process
    */
@@ -98,8 +98,8 @@ public class KdbConnection{
    */
   int J;
   /**
-  vt indicates the ipc version to encode with
-  */
+   vt indicates the ipc version to encode with
+   */
   int vt;
   /**
    marks whether the message being deserialized was encoded little or big endian
@@ -109,7 +109,7 @@ public class KdbConnection{
    indicates whether the current connection is to a local interface. Tested when considering whether to compress an
    outgoing message.
    */
-  boolean l; 
+  boolean l;
   /**
    indicates whether messages should be candidates for compressing before sending
    */
@@ -123,6 +123,7 @@ public class KdbConnection{
   void io(Socket x) throws IOException{
     s=x;
     s.setTcpNoDelay(true);
+    // TODO s.setSoTimeout();
     InetAddress addr=s.getInetAddress();
     l=addr.isAnyLocalAddress()||addr.isLoopbackAddress();
     i=new DataInputStream(s.getInputStream());
@@ -217,19 +218,19 @@ public class KdbConnection{
   }
   /**
    Initializes a new {@link KdbConnection} instance for the purposes of serialization only.
-  */
+   */
   public KdbConnection(){
     vt='\3';
     l=false;
     i=new DataInputStream(new InputStream(){@Override public int read()throws IOException{throw new UnsupportedOperationException("nyi");}});
     o=new OutputStream(){@Override public void write(int b)throws IOException{throw new UnsupportedOperationException("nyi");}};
   }
-  
+
   @Override
-            public String toString() {
-                        return "KdbConnection [" + s.getInetAddress().getHostName() + ":" + s.getPort()+ ", connected=" + s.isConnected() + "]";
+  public String toString() {
+    return "KdbConnection [" + s.getInetAddress().getHostName() + ":" + s.getPort()+ ", connected=" + s.isConnected() + "]";
   }
-  
+
 
   public static class Month implements Comparable<Month>{
     public int i;
@@ -552,7 +553,7 @@ public class KdbConnection{
   public TimeZone tz=TimeZone.getDefault();
   public final ZoneId zone = ZoneId.systemDefault();
   static final long k=86400000L*10957, n=1000000000L, ke=946684800000000000L;
-;
+  ;
   long o(long x){
     return tz.getOffset(x);
   }
@@ -590,18 +591,18 @@ public class KdbConnection{
   final ZoneOffset u = ZoneOffset.UTC;
 
   LocalDateTime rp() {
-	  final ZoneOffset u = ZoneOffset.UTC;
-	  long j=ke+rj();
-	  return LocalDateTime.ofInstant(
-				Instant.ofEpochSecond((long)j/n,
-				j % n),u);
+    final ZoneOffset u = ZoneOffset.UTC;
+    long j=ke+rj();
+    return LocalDateTime.ofInstant(
+            Instant.ofEpochSecond((long)j/n,
+                    j % n),u);
   }
   void w(LocalDateTime p){
-	  if(vt<1)
+    if(vt<1)
       throw new RuntimeException("Timestamp not valid pre kdb+2.6");
-	  // write nanos-epoch
-	  long j=(p.toInstant(u).getEpochSecond()*n) + (p.toInstant(u).getNano())-ke;
-      w(j);
+    // write nanos-epoch
+    long j=(p.toInstant(u).getEpochSecond()*n) + (p.toInstant(u).getNano())-ke;
+    w(j);
   }
   String rs() throws UnsupportedEncodingException{
     int i=j;
@@ -629,7 +630,7 @@ public class KdbConnection{
           return rb();
         case (-2):
           return rg();
-       case -4:
+        case -4:
           return b[j++];
         case -5:
           return rh();
@@ -787,13 +788,13 @@ public class KdbConnection{
    gets the numeric type of the supplied object used in kdb+.
 
    @param x Object to get the numeric type of
-   */ 
+   */
   public static int t(Object x){
     return x instanceof Boolean?-1:x instanceof UUID?-2:x instanceof Byte?-4:x instanceof Short?-5:x instanceof Integer?-6:x instanceof Long?-7:x instanceof Float?-8:x instanceof Double?-9:x instanceof Character?-10:x instanceof String?-11
-      :x instanceof LocalDate?-14:x instanceof Time?-19:x instanceof Timestamp?-12:x instanceof java.util.Date?-15:x instanceof Timespan?-16:x instanceof Month?-13:x instanceof Minute?-17:x instanceof Second?-18
-      :x instanceof boolean[]?1:x instanceof UUID[]?2:x instanceof byte[]?4:x instanceof short[]?5:x instanceof int[]?6:x instanceof long[]?7:x instanceof float[]?8:x instanceof double[]?9:x instanceof char[]?10:x instanceof String[]?11
-      :x instanceof LocalDate[]?14:x instanceof Time[]?19:x instanceof Timestamp[]?12:x instanceof java.util.Date[]?15:x instanceof Timespan[]?16:x instanceof Month[]?13:x instanceof Minute[]?17:x instanceof Second[]?18
-      :x instanceof Flip?98:x instanceof Dict?99:0;
+            :x instanceof LocalDate?-14:x instanceof Time?-19:x instanceof LocalDateTime?-12:x instanceof java.util.Date?-15:x instanceof Timespan?-16:x instanceof Month?-13:x instanceof Minute?-17:x instanceof Second?-18
+            :x instanceof boolean[]?1:x instanceof UUID[]?2:x instanceof byte[]?4:x instanceof short[]?5:x instanceof int[]?6:x instanceof long[]?7:x instanceof float[]?8:x instanceof double[]?9:x instanceof char[]?10:x instanceof String[]?11
+            :x instanceof LocalDate[]?14:x instanceof Time[]?19:x instanceof LocalDateTime[]?12:x instanceof java.util.Date[]?15:x instanceof Timespan[]?16:x instanceof Month[]?13:x instanceof Minute[]?17:x instanceof Second[]?18
+            :x instanceof Flip?98:x instanceof Dict?99:0;
   }
   /**
    "number of bytes from type." A helper for nx, to assist in calculating the number of bytes required to serialize a
@@ -816,18 +817,18 @@ public class KdbConnection{
   /**
    a helper function for nx, returns the number of elements in the supplied object.
    e.g. for a Dict, the number of keys
-        for a Flip, the number of rows
-        an array, the length of the array
+   for a Flip, the number of rows
+   an array, the length of the array
 
-   @param obj Object to be serialized
+   @param x Object to be serialized
    */
-  public static int n(Object x) throws UnsupportedEncodingException{
+  public static int n(Object x) throws UnsupportedEncodingException {
     return x instanceof Dict?n(((Dict)x).x):x instanceof Flip?n(((Flip)x).y[0]):x instanceof char[]?new String((char[])x).getBytes(encoding).length:Array.getLength(x);
   }
   /**
    calculates the number of bytes which would be required to serialize the supplied object.
 
-   @param obj Object to be serialized
+   @param x Object to be serialized
    */
   public int nx(Object x) throws UnsupportedEncodingException{
     int i=0, n, t=t(x), j;
@@ -981,9 +982,9 @@ public class KdbConnection{
   public Object deserialize(byte[]buffer)throws KException, UnsupportedEncodingException{
     synchronized(i){
       b=buffer;
-      a=b[0]==1;  // endianness of the msg 
+      a=b[0]==1;  // endianness of the msg
       boolean compressed=b[2]==1;
-      j=8;      
+      j=8;
       if(compressed)
         uncompress();
       if(b[8]==-128){
@@ -991,7 +992,7 @@ public class KdbConnection{
         throw new KException(rs());
       }
       return r(); // deserialize the message
-    }    
+    }
   }
   protected void w(int msgType,Object x) throws IOException{
     synchronized(o){
@@ -1104,7 +1105,7 @@ public class KdbConnection{
   public Object k() throws KException,IOException,UnsupportedEncodingException{
     synchronized(i){
       i.readFully(b=new byte[8]); // read the msg header
-      a=b[0]==1;  // endianness of the msg 
+      a=b[0]==1;  // endianness of the msg
       if(b[1]==1) // msg types are 0 - async, 1 - sync, 2 - response
         sync++;   // an incoming sync message means the remote will expect a response message
       j=4;
@@ -1117,7 +1118,7 @@ public class KdbConnection{
    Sends a sync message to the remote kdb+ process. This blocks until the message has been sent in full, and a message
    is received from the remote; typically the received message would be the corresponding response message.
 
-   @param obj The object to send
+   @param x The object to send
    */
   public synchronized Object k(Object x) throws KException,IOException{
     w(1,x);
@@ -1156,7 +1157,7 @@ public class KdbConnection{
    @param y The second argument to the function named in s
    */
   public Object k(String s,Object x,Object y) throws KException,IOException{
-   Object[] a={cs(s),x,y};
+    Object[] a={cs(s),x,y};
     return k(a);
   }
   /**
@@ -1172,10 +1173,10 @@ public class KdbConnection{
    */
   public Object k(String s,Object x,Object y,Object z) throws KException,IOException{
     Object[] a={cs(s),x,y,z};
-    return k(a); 
+    return k(a);
   }
   public static Object[] NULL={null,new Boolean(false),new UUID(0,0),null,new Byte((byte)0),new Short(Short.MIN_VALUE),new Integer(ni),new Long(nj),new Float(nf),new Double(nf),new Character(' '),"",
-    new Timestamp(nj),new Month(ni),LocalDate.MIN,new java.util.Date(nj),new Timespan(nj),new Minute(ni),new Second(ni),new Time(nj)
+          new Timestamp(nj),new Month(ni),LocalDate.MIN,new java.util.Date(nj),new Timespan(nj),new Minute(ni),new Second(ni),new Time(nj)
   };
   /**
    Gets a null object for the type indicated by the character.
@@ -1224,7 +1225,7 @@ public class KdbConnection{
    removes the key from a keyed table. A keyed table(a.k.a. Flip) is a dictionary where both key and value are tables
    themselves. For ease of processing, this method, td, table from dictionary, can be used to remove the key.
 
-   @param x A table (a.k.a. flip) or keyed table.
+   @param X A table (a.k.a. flip) or keyed table.
    */
   public static Flip td(Object X) throws java.io.UnsupportedEncodingException{
     if(X instanceof Flip)
@@ -1236,7 +1237,7 @@ public class KdbConnection{
     System.arraycopy(a.x,0,x,0,m);
     System.arraycopy(b.x,0,x,m,n);
     Object[] y=new Object[m+n];
-   System.arraycopy(a.y,0,y,0,m);
+    System.arraycopy(a.y,0,y,0,m);
     System.arraycopy(b.y,0,y,m,n);
     return new Flip(new Dict(x,y));
   }
